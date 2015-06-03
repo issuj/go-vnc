@@ -167,6 +167,7 @@ func (c *ClientConn) FramebufferUpdateRequest(incremental bool, x, y, width, hei
 //
 // See 7.5.4.
 func (c *ClientConn) KeyEvent(keysym uint32, down bool) error {
+	var buf bytes.Buffer
 	var downFlag uint8 = 0
 	if down {
 		downFlag = 1
@@ -181,9 +182,13 @@ func (c *ClientConn) KeyEvent(keysym uint32, down bool) error {
 	}
 
 	for _, val := range data {
-		if err := binary.Write(c.c, binary.BigEndian, val); err != nil {
+		if err := binary.Write(&buf, binary.BigEndian, val); err != nil {
 			return err
 		}
+	}
+
+	if _, err := c.c.Write(buf.Bytes()[0:8]); err != nil {
+		return err
 	}
 
 	return nil
